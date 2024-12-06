@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Peso</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.5s ease;
+        }
+        .green {
+            background-color: green;
+            color: white;
+        }
+        .blue {
+            background-color: blue;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Monitor de Peso</h1>
+    <div id="peso-info">
+        <p id="peso"></p>
+        <p id="estado"></p>
+        <audio id="audioSuccess" src="static/success.mp3"></audio>
+        <audio id="audioAlert" src="static/alert.mp3"></audio>
+    </div>
+
+    <script>
+        var somTocado = false;  // Variável para controlar se o som já foi tocado
+
+        function tocarSom(som) {
+            const audioSuccess = document.getElementById('audioSuccess');
+            const audioAlert = document.getElementById('audioAlert');
+
+            if(som === "sucessoSom") 
+                audioSuccess.play();
+        
+            if(som === "alertaSom") 
+                audioAlert.play();
+        }
+
+        function atualizarPeso() {
+            $.getJSON('/peso_atual', function(data) {
+                var peso = data.peso;
+                var estado = data.estado;
+                $('#peso').text('Peso Atual: ' + peso + ' kg');
+                $('#estado').text('Estado: ' + (estado === 'dentro' ? 'Dentro do limite' : 'Fora do limite'));
+
+                // Atualizar a cor de fundo com base no estado
+                if (estado === 'dentro') {
+                    $('body').removeClass('blue').addClass('green');
+
+                    // Tocar som de sucesso se estiver dentro do limite e se ainda não tocou
+                    if (!somTocado) {
+                        tocarSom("sucessoSom");  // Toca o som de sucesso
+                        somTocado = true; // Impede de tocar o som mais de uma vez
+                    }
+                } else {
+                    $('body').removeClass('green').addClass('blue');
+
+                    // Tocar som de alerta sempre que for "fora do limite"
+                    tocarSom("alertaSom"); 
+                    somTocado = false; // Reseta o estado para permitir o som na próxima vez que for verde
+                }
+            });
+        }
+
+        // Atualizar a cada 2 segundos
+        setInterval(atualizarPeso, 2000);
+    </script>
+</body>
+</html>
